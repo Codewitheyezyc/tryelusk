@@ -228,10 +228,18 @@ export class FalProvider implements AIProviderAdapter {
     console.log(`[FalProvider.generateVideo] URL: ${url}, Model: ${options.modelName}, ImageToVideo: ${isImageToVideo}, Duration: ${duration}s, AspectRatio: ${aspectRatio}`);
 
     const videoTasks = Array.from({ length: count }, (_, idx) => {
+      const videoResolution =
+        options.resolution === "4k" || options.resolution === "4K"
+          ? "4k"
+          : options.resolution === "720p"
+          ? "720p"
+          : "1080p";
+
       const payload: Record<string, any> = {
         prompt: options.prompt,
         duration,
         aspect_ratio: aspectRatio,
+        resolution: videoResolution,
         generate_audio: true,
         seed: options.seed ? options.seed + idx * 100 : Math.floor(Math.random() * 1000000),
       };
