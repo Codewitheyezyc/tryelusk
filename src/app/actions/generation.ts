@@ -79,6 +79,72 @@ export async function generateMediaAction(
     return { success: false, error: "You must be signed in to generate media." };
   }
 
+  // Check user tier & permissions (chydexxzy2002@gmail.com is permanent Pro owner)
+  const { data: profile } = await (supabase.from("profiles") as any)
+    .select("tier, is_admin")
+    .eq("id", user.id)
+    .single();
+
+  const isOwner = user.email === "chydexxzy2002@gmail.com";
+  const isAdmin = isOwner || Boolean(profile?.is_admin);
+  const userTier = isOwner ? "pro" : ((profile?.tier || "free") as "free" | "starter" | "pro" | "studio");
+
+  const TIER_HIERARCHY: Record<string, number> = {
+    free: 0,
+    starter: 1,
+    pro: 2,
+    studio: 3,
+  };
+
+  const MODEL_TIER_REQUIREMENT: Record<string, "free" | "starter" | "pro" | "studio"> = {
+    // Pro Tier ($0.15 - $0.70)
+    "kling-3.0": "pro",
+    "Kling 3.0 Cinema Pro": "pro",
+    "nano-banana-pro": "pro",
+    "seedream-pro": "pro",
+    "flux-ultra": "pro",
+    "luma-ray-2": "pro",
+    "sync-lipsync-pro": "pro",
+
+    // Indie Starter Tier ($0.04 - $0.56)
+    "flux-dev": "starter",
+    "nano-banana": "starter",
+    "recraft-v3": "starter",
+    "kling-2.5-turbo": "starter",
+    "Kling 3.0 Turbo": "starter",
+    "seedance-video": "starter",
+    "seedance-2.5": "starter",
+    "sync-lipsync-fast": "starter",
+
+    // Free Tier ($0.002 - $0.05)
+    "nano-banana-lite": "free",
+    "seedream-v4": "free",
+    "gpt-image-2": "free",
+    "wan-2.1": "free",
+    "Wan 2.1 Direct": "free",
+    "voice-hd": "free",
+  };
+
+  const requiredTier = MODEL_TIER_REQUIREMENT[modelName] || "free";
+  const userLevel = TIER_HIERARCHY[userTier] ?? 0;
+  const requiredLevel = TIER_HIERARCHY[requiredTier] ?? 0;
+
+  if (!isAdmin && userLevel < requiredLevel) {
+    const tierName = requiredTier === "pro" ? "Studio PRO" : "Indie Filmmaker";
+    return {
+      success: false,
+      error: `The "${modelName}" engine requires an active ${tierName} plan. Upgrade your subscription to direct with this model.`,
+    };
+  }
+
+  // 4K Resolution Gating (Studio PRO / Admin only)
+  if (!isAdmin && (resolution === "4k" || resolution === "4K") && userLevel < 2) {
+    return {
+      success: false,
+      error: "4K UHD Master resolution requires a Studio PRO plan. Please select 1080p HD or upgrade.",
+    };
+  }
+
   // 1. Fetch Character Visual DNA if character is selected
   let characterSpec: string | undefined;
   let characterName: string | undefined;

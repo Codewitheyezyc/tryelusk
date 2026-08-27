@@ -23,6 +23,7 @@ import {
   User,
   X,
   Check,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StudioModel } from "@/lib/ai/models";
@@ -892,15 +893,30 @@ export function CinemaDock({
                           : "border-white/[0.08] bg-black/40 hover:border-white/20 hover:bg-white/[0.04]"
                       )}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white group-hover:text-[#7C5CFF] transition-colors">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-xs font-bold text-white group-hover:text-[#7C5CFF] transition-colors truncate">
                           {model.name}
                         </span>
-                        {model.badge && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#7C5CFF]/30 text-[#C4B5FD] uppercase font-mono">
-                            {model.badge}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {model.minTier === "pro" ? (
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#F59E0B]/20 text-[#FCD34D] border border-[#F59E0B]/30 uppercase font-mono flex items-center gap-0.5">
+                              <Lock className="h-2 w-2" /> PRO
+                            </span>
+                          ) : model.minTier === "starter" ? (
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-[#7C5CFF]/20 text-[#C4B5FD] border border-[#7C5CFF]/30 uppercase font-mono flex items-center gap-0.5">
+                              <Lock className="h-2 w-2" /> INDIE
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase font-mono">
+                              FREE
+                            </span>
+                          )}
+                          {model.badge && (
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-white/[0.08] text-white/80 uppercase font-mono">
+                              {model.badge}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <p className="text-[11px] text-[#8B8B96] leading-relaxed line-clamp-2">
                         {model.description}
