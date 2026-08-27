@@ -238,6 +238,7 @@ export class FalProvider implements AIProviderAdapter {
 
       if (isImageToVideo && sourceImageUrl) {
         payload.image_url = sourceImageUrl;
+        payload.start_image_url = sourceImageUrl;
       }
 
       return fetch(url, {
