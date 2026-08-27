@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* TryElusk Dark First Theme */
+    --background: 240 18% 3.5%;     /* #060608 (Ultra deep obsidian) */
+    --foreground: 240 12% 96%;      /* #F2F2F5 */
+
+    --card: 240 14% 7%;             /* #101015 */
+    --card-foreground: 240 12% 96%; /* #F2F2F5 */
+
+    --popover: 240 14% 7%;          /* #101015 */
+    --popover-foreground: 240 12% 96%;
+
+    --primary: 252 100% 68%;        /* #7C5CFF (Electric violet) */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 10% 14%;       /* #1E1E26 */
+    --secondary-foreground: 240 12% 96%;
+
+    --muted: 240 12% 10%;           /* #16161C */
+    --muted-foreground: 240 5% 56%; /* #8B8B96 */
+
+    --accent: 252 100% 68%;         /* #7C5CFF */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 91% 71%;       /* #F87171 (Soft red) */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 10% 16%;          /* #22222C */
+    --input: 240 10% 16%;           /* #22222C */
+    --ring: 252 100% 68%;           /* #7C5CFF */
+
+    --success: 142 69% 58%;         /* #4ADE80 */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 43 96% 56%;          /* #FBBF24 */
+    --warning-foreground: 240 15% 5%;
+
+    --radius: 0.875rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-color: #060608;
+    color: #F2F2F5;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124, 92, 255, 0.12), transparent 70%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(251, 191, 36, 0.04), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* Glassmorphism & High-End Cinema Styles */
+.glass-panel {
+  background: rgba(16, 16, 22, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(18, 18, 25, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  background: rgba(24, 24, 34, 0.8);
+  border-color: rgba(124, 92, 255, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(124, 92, 255, 0.1);
+}
+
+.glow-pill-pro {
+  background: linear-gradient(135deg, #7C5CFF 0%, #B066FF 100%);
+  color: white;
+  box-shadow: 0 0 12px rgba(124, 92, 255, 0.4);
+}
+
+.glow-focus {
+  transition: all 0.2s ease;
+}
+
+.glow-focus:focus-within {
+  border-color: rgba(124, 92, 255, 0.8) !important;
+  box-shadow: 0 0 25px rgba(124, 92, 255, 0.25) !important;
+}
+
+/* Custom sleek scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a38 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #22222C;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7C5CFF;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom sleek horizontal and vertical scrollbars matching app design */
+.cinema-scrollbar::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+
+.cinema-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 9999px;
+}
+
+.cinema-scrollbar::-webkit-scrollbar-thumb {
+  background: #2D2D3D;
+  border-radius: 9999px;
+}
+
+.cinema-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #7C5CFF;
+}
+
+.cinema-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2D2D3D transparent;
+}
