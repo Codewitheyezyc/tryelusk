@@ -2,9 +2,15 @@ import React from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { InspirationFeed } from "@/components/shared/inspiration-feed";
-import { ShieldCheck, Layers, Palette, Database, Sparkles, Film, Wand2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { ShieldCheck, Layers, Palette, Database, Sparkles, Film, Wand2, ArrowRight } from "lucide-react";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const foundations = [
     {
       title: "Claude Director Intelligence",
@@ -33,7 +39,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8 space-y-16">
+    <div className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8 space-y-16 select-none">
       {/* Background ambient gradient */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#7C5CFF]/15 blur-[140px] rounded-full" />
@@ -51,26 +57,48 @@ export default function Home() {
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-[#F2F2F5]">
           Turn your idea into a movie.
         </h1>
-        <p className="mt-4 text-lg text-[#8B8B96] max-w-2xl mx-auto">
+        <p className="mt-4 text-base sm:text-lg text-[#8B8B96] max-w-2xl mx-auto leading-relaxed">
           No camera, no crew, no experience needed. Directed by AI, powered by your imagination.
         </p>
 
-        {/* CTA buttons */}
-        <div className="mt-8 flex items-center justify-center gap-4">
-          <Link
-            href="/generate"
-            className="inline-flex items-center justify-center rounded-lg bg-[#7C5CFF] px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#7C5CFF]/25 hover:bg-[#6D3EFF] transition-all gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Open Studio
-          </Link>
-          <Link
-            href="/vibe-director"
-            className="inline-flex items-center justify-center rounded-lg border border-[#7C5CFF]/40 bg-[#16161C] px-6 py-2.5 text-sm font-medium text-[#F2F2F5] hover:bg-[#26262E] transition-all gap-2"
-          >
-            <Wand2 className="h-4 w-4 text-[#FBBF24]" />
-            Vibe Director
-          </Link>
+        {/* Dynamic CTA buttons based on auth state */}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-md mx-auto">
+          {user ? (
+            <>
+              <Link
+                href="/generate"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#7C5CFF] to-[#6D3EFF] px-7 py-3.5 text-sm font-bold text-white shadow-xl shadow-[#7C5CFF]/30 hover:from-[#6D3EFF] hover:to-[#5B2DEE] transition-all gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>Open Studio</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/vibe-director"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl border border-white/[0.12] bg-[#16161C] px-7 py-3.5 text-sm font-semibold text-[#F2F2F5] hover:bg-[#26262E] transition-all gap-2"
+              >
+                <Wand2 className="h-4 w-4 text-[#FBBF24]" />
+                <span>Vibe Director</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/signup"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#7C5CFF] to-[#6D3EFF] px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-[#7C5CFF]/30 hover:from-[#6D3EFF] hover:to-[#5B2DEE] transition-all gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>Get Started Free</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/pricing"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl border border-white/[0.12] bg-[#16161C] px-7 py-3.5 text-sm font-semibold text-[#F2F2F5] hover:bg-[#26262E] transition-all gap-2"
+              >
+                <span>View Pricing &amp; Plans</span>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Studio Foundations Grid */}
@@ -78,10 +106,10 @@ export default function Home() {
           {foundations.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <Card key={idx} className="border-[#26262E] bg-[#16161C]/80 backdrop-blur-sm transition-colors hover:border-[#33333D]">
+              <Card key={idx} className="border-[#26262E] bg-[#16161C]/80 backdrop-blur-sm transition-colors hover:border-[#33333D] rounded-2xl">
                 <CardHeader className="p-5 pb-2">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-[#0B0B0F] border border-[#26262E]">
+                    <div className="p-2 rounded-xl bg-[#0B0B0F] border border-[#26262E]">
                       <Icon className={`h-5 w-5 ${item.color}`} />
                     </div>
                     <CardTitle className="text-base font-semibold">{item.title}</CardTitle>

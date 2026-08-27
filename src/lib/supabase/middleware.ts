@@ -41,12 +41,19 @@ export async function updateSession(request: NextRequest) {
   const url = request.nextUrl.clone();
   const { pathname } = url;
 
-  // Protected route checking
+  // Protected workspace routes that strictly require authentication
   const isProtectedRoute =
+    pathname.startsWith("/generate") ||
+    pathname.startsWith("/storyboard") ||
+    pathname.startsWith("/vibe-director") ||
+    pathname.startsWith("/media") ||
+    pathname.startsWith("/generations") ||
+    pathname.startsWith("/projects") ||
+    pathname.startsWith("/settings") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/settings") ||
-    pathname.startsWith("/projects");
+    pathname.startsWith("/trash") ||
+    pathname.startsWith("/audio");
 
   const isAuthRoute =
     pathname.startsWith("/login") ||
