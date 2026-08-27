@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Image as ImageIcon,
   Video,
@@ -176,6 +177,12 @@ export function CinemaDock({
 
   const dockRef = useRef<HTMLDivElement | null>(null);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Close modals when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -210,284 +217,296 @@ export function CinemaDock({
   return (
     <div ref={dockRef} className="sticky bottom-20 md:bottom-4 z-30 mx-auto w-full max-w-5xl px-3 sm:px-4 relative mb-20 md:mb-0">
       {/* ========================================================================= */}
-      {/* FLOATING ACTIVE MODAL ANCHOR (RENDERED OUTSIDE OVERFLOW TO PREVENT CLIPPING) */}
+      {/* GLOBAL HIGH-PRIORITY CHIP MODAL (PORTAL TO PREVENT CLIPPING ON MOBILE) */}
       {/* ========================================================================= */}
-      {activeChipModal && (
-        <div
-          style={{
-            left: `${Math.max(12, Math.min(modalLeft, (dockRef.current?.clientWidth || 600) - 270))}px`,
-          }}
-          className="absolute bottom-[calc(100%+8px)] z-50 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
-        >
-          {/* 1. CAST MODAL */}
-          {activeChipModal === "cast" && (
-            <div className="w-64 rounded-2xl border border-white/[0.16] bg-[#14141E] p-2 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1">
-              <div className="px-2 py-1 text-[10px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Lock Actor Visual DNA
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectCharacterId?.(null);
-                  setActiveChipModal(null);
-                }}
-                className={cn(
-                  "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between",
-                  !selectedCharacterId
-                    ? "bg-[#7C5CFF] text-white"
-                    : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                )}
-              >
-                <span>No Actor Locked (Custom Scene)</span>
-                {!selectedCharacterId && <Check className="h-3 w-3 text-white" />}
-              </button>
-              {characters.map((char) => (
+      {mounted &&
+        activeChipModal &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-xl flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200 select-none"
+            onClick={() => setActiveChipModal(null)}
+          >
+            <div
+              className="w-full max-w-sm max-h-[80vh] rounded-t-3xl sm:rounded-3xl border border-white/[0.12] bg-[#14141E] shadow-[0_25px_70px_rgba(0,0,0,0.98)] p-4 sm:p-5 space-y-3 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-2 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header with Title & Close button */}
+              <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                    {activeChipModal === "cast"
+                      ? "Lock Actor Visual DNA"
+                      : activeChipModal === "film"
+                      ? "Film Atmosphere"
+                      : activeChipModal === "camera"
+                      ? "Camera Movement Rig"
+                      : activeChipModal === "lighting"
+                      ? "Lighting Preset"
+                      : activeChipModal === "color"
+                      ? "Color Grading"
+                      : activeChipModal === "resolution"
+                      ? "Select Resolution"
+                      : activeChipModal === "aspectRatio"
+                      ? "Aspect Ratio Format"
+                      : "Duration"}
+                  </span>
+                </div>
                 <button
-                  key={char.id}
                   type="button"
-                  onClick={() => {
-                    onSelectCharacterId?.(char.id);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 justify-between",
-                    selectedCharacterId === char.id
-                      ? "bg-[#7C5CFF] text-white"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
+                  onClick={() => setActiveChipModal(null)}
+                  className="p-1 rounded-lg text-[#8B8B96] hover:text-white hover:bg-white/[0.06]"
                 >
-                  <div className="flex items-center gap-2 truncate">
-                    {char.reference_sheet_url ? (
-                      <img
-                        src={char.reference_sheet_url}
-                        alt={char.name}
-                        className="h-5 w-5 rounded-full object-cover border border-white/20 shrink-0"
-                      />
-                    ) : (
-                      <div className="h-5 w-5 rounded-full bg-[#7C5CFF]/30 flex items-center justify-center text-[10px] text-white font-bold shrink-0">
-                        {char.name.charAt(0)}
-                      </div>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* 1. CAST MODAL */}
+              {activeChipModal === "cast" && (
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectCharacterId?.(null);
+                      setActiveChipModal(null);
+                    }}
+                    className={cn(
+                      "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between",
+                      !selectedCharacterId
+                        ? "bg-[#7C5CFF] text-white font-bold"
+                        : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
                     )}
-                    <span className="truncate font-medium">{char.name}</span>
+                  >
+                    <span>No Actor Locked (Custom Scene)</span>
+                    {!selectedCharacterId && <Check className="h-3.5 w-3.5 text-white" />}
+                  </button>
+                  {characters.map((char) => (
+                    <button
+                      key={char.id}
+                      type="button"
+                      onClick={() => {
+                        onSelectCharacterId?.(char.id);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-2 justify-between",
+                        selectedCharacterId === char.id
+                          ? "bg-[#7C5CFF] text-white font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        {char.reference_sheet_url ? (
+                          <img
+                            src={char.reference_sheet_url}
+                            alt={char.name}
+                            className="h-5 w-5 rounded-full object-cover border border-white/20 shrink-0"
+                          />
+                        ) : (
+                          <div className="h-5 w-5 rounded-full bg-[#7C5CFF]/30 flex items-center justify-center text-[10px] text-white font-bold shrink-0">
+                            {char.name.charAt(0)}
+                          </div>
+                        )}
+                        <span className="truncate font-medium">{char.name}</span>
+                      </div>
+                      {selectedCharacterId === char.id && <Check className="h-3.5 w-3.5 text-white shrink-0" />}
+                    </button>
+                  ))}
+                  <div className="pt-1.5 border-t border-white/[0.06]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveChipModal(null);
+                        onOpenCharacterModal?.();
+                      }}
+                      className="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold text-[#7C5CFF] hover:bg-[#7C5CFF]/10 transition-colors flex items-center gap-1.5"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Create New Cast Member</span>
+                    </button>
                   </div>
-                  {selectedCharacterId === char.id && <Check className="h-3 w-3 text-white shrink-0" />}
-                </button>
-              ))}
-              <div className="pt-1 border-t border-white/[0.06]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveChipModal(null);
-                    onOpenCharacterModal?.();
-                  }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#7C5CFF] hover:bg-[#7C5CFF]/10 transition-colors flex items-center gap-1.5"
-                >
-                  <Plus className="h-3 w-3" />
-                  <span>Create New Cast Member</span>
-                </button>
-              </div>
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* 2. FILM SETUP MODAL */}
-          {activeChipModal === "film" && (
-            <div className="w-52 rounded-2xl border border-white/[0.16] bg-[#14141E] p-1.5 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
-              <div className="px-2 py-1 text-[9px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Film Atmosphere
-              </div>
-              {FILM_SETUPS.map((setup) => (
-                <button
-                  key={setup}
-                  type="button"
-                  onClick={() => {
-                    onChangeFilmSetup(setup);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between",
-                    filmSetup === setup
-                      ? "bg-[#7C5CFF] text-white font-bold"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
-                >
-                  <span>{setup}</span>
-                  {filmSetup === setup && <Check className="h-3 w-3 text-white" />}
-                </button>
-              ))}
-            </div>
-          )}
+              {/* 2. FILM SETUP MODAL */}
+              {activeChipModal === "film" && (
+                <div className="space-y-1 max-h-64 overflow-y-auto custom-scrollbar">
+                  {FILM_SETUPS.map((setup) => (
+                    <button
+                      key={setup}
+                      type="button"
+                      onClick={() => {
+                        onChangeFilmSetup(setup);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between",
+                        filmSetup === setup
+                          ? "bg-[#7C5CFF] text-white font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span>{setup}</span>
+                      {filmSetup === setup && <Check className="h-3.5 w-3.5 text-white" />}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* 3. CAMERA MOVEMENT MODAL */}
-          {activeChipModal === "camera" && (
-            <div className="w-48 rounded-2xl border border-white/[0.16] bg-[#14141E] p-1.5 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1">
-              <div className="px-2 py-1 text-[9px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Camera Rig
-              </div>
-              {CAMERA_PRESETS.map((cam) => (
-                <button
-                  key={cam.id}
-                  type="button"
-                  onClick={() => {
-                    onChangeCameraMovement(cam.id);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between",
-                    cameraMovement === cam.id
-                      ? "bg-[#7C5CFF] text-white font-bold"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
-                >
-                  <span>{cam.label}</span>
-                  {cameraMovement === cam.id && <Check className="h-3 w-3 text-white" />}
-                </button>
-              ))}
-            </div>
-          )}
+              {/* 3. CAMERA MOVEMENT MODAL */}
+              {activeChipModal === "camera" && (
+                <div className="space-y-1">
+                  {CAMERA_PRESETS.map((cam) => (
+                    <button
+                      key={cam.id}
+                      type="button"
+                      onClick={() => {
+                        onChangeCameraMovement(cam.id);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between",
+                        cameraMovement === cam.id
+                          ? "bg-[#7C5CFF] text-white font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span>{cam.label}</span>
+                      {cameraMovement === cam.id && <Check className="h-3.5 w-3.5 text-white" />}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* 4. COLOR PALETTE MODAL */}
-          {activeChipModal === "color" && (
-            <div className="w-52 rounded-2xl border border-white/[0.16] bg-[#14141E] p-1.5 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1">
-              <div className="px-2 py-1 text-[9px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Color Grading
-              </div>
-              {COLOR_PALETTES.map((palette) => (
-                <button
-                  key={palette}
-                  type="button"
-                  onClick={() => {
-                    onChangeColorPalette(palette);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between",
-                    colorPalette === palette
-                      ? "bg-[#FBBF24] text-black font-bold"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
-                >
-                  <span>{palette}</span>
-                  {colorPalette === palette && <Check className="h-3 w-3 text-black" />}
-                </button>
-              ))}
-            </div>
-          )}
+              {/* 4. COLOR PALETTE MODAL */}
+              {activeChipModal === "color" && (
+                <div className="space-y-1">
+                  {COLOR_PALETTES.map((palette) => (
+                    <button
+                      key={palette}
+                      type="button"
+                      onClick={() => {
+                        onChangeColorPalette(palette);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between",
+                        colorPalette === palette
+                          ? "bg-[#FBBF24] text-black font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span>{palette}</span>
+                      {colorPalette === palette && <Check className="h-3.5 w-3.5 text-black" />}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* 5. LIGHTING MODAL */}
-          {activeChipModal === "lighting" && (
-            <div className="w-52 rounded-2xl border border-white/[0.16] bg-[#14141E] p-1.5 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1">
-              <div className="px-2 py-1 text-[9px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Lighting Atmosphere
-              </div>
-              {LIGHTING_PRESETS.map((light) => (
-                <button
-                  key={light.id}
-                  type="button"
-                  onClick={() => {
-                    onChangeLightingMood(light.id);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between",
-                    lightingMood === light.id
-                      ? "bg-[#4ADE80] text-black font-bold"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
-                >
-                  <span>{light.label}</span>
-                  {lightingMood === light.id && <Check className="h-3 w-3 text-black" />}
-                </button>
-              ))}
-            </div>
-          )}
+              {/* 5. LIGHTING MODAL */}
+              {activeChipModal === "lighting" && (
+                <div className="space-y-1">
+                  {LIGHTING_PRESETS.map((light) => (
+                    <button
+                      key={light.id}
+                      type="button"
+                      onClick={() => {
+                        onChangeLightingMood(light.id);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between",
+                        lightingMood === light.id
+                          ? "bg-[#4ADE80] text-black font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span>{light.label}</span>
+                      {lightingMood === light.id && <Check className="h-3.5 w-3.5 text-black" />}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* 6. RESOLUTION MODAL */}
-          {activeChipModal === "resolution" && (
-            <div className="w-52 rounded-2xl border border-white/[0.16] bg-[#14141E] p-1.5 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1">
-              <div className="px-2 py-1 text-[9px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Select Resolution
-              </div>
-              {(mediaType === "video" ? VIDEO_RESOLUTIONS : IMAGE_RESOLUTIONS).map((res) => (
-                <button
-                  key={res.id}
-                  type="button"
-                  onClick={() => {
-                    onChangeResolution(res.id);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between",
-                    resolution.toLowerCase() === res.id.toLowerCase()
-                      ? "bg-[#7C5CFF] text-white font-bold"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
-                >
-                  <span>{res.label}</span>
-                  {resolution.toLowerCase() === res.id.toLowerCase() && (
-                    <Check className="h-3.5 w-3.5 text-white" />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+              {/* 6. RESOLUTION MODAL */}
+              {activeChipModal === "resolution" && (
+                <div className="space-y-1">
+                  {(mediaType === "video" ? VIDEO_RESOLUTIONS : IMAGE_RESOLUTIONS).map((res) => (
+                    <button
+                      key={res.id}
+                      type="button"
+                      onClick={() => {
+                        onChangeResolution(res.id);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between",
+                        resolution.toLowerCase() === res.id.toLowerCase()
+                          ? "bg-[#7C5CFF] text-white font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span>{res.label}</span>
+                      {resolution.toLowerCase() === res.id.toLowerCase() && (
+                        <Check className="h-3.5 w-3.5 text-white" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* 7. ASPECT RATIO MODAL */}
-          {activeChipModal === "aspectRatio" && (
-            <div className="w-60 rounded-2xl border border-white/[0.16] bg-[#14141E] p-1.5 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1">
-              <div className="px-2 py-1 text-[9px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Aspect Ratio Format
-              </div>
-              {ASPECT_RATIO_OPTIONS.map((ar) => (
-                <button
-                  key={ar.id}
-                  type="button"
-                  onClick={() => {
-                    onChangeAspectRatio(ar.id);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between",
-                    aspectRatio === ar.id
-                      ? "bg-[#7C5CFF] text-white font-bold"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
-                >
-                  <span>{ar.label}</span>
-                  {aspectRatio === ar.id && <Check className="h-3.5 w-3.5 text-white" />}
-                </button>
-              ))}
-            </div>
-          )}
+              {/* 7. ASPECT RATIO MODAL */}
+              {activeChipModal === "aspectRatio" && (
+                <div className="space-y-1">
+                  {ASPECT_RATIO_OPTIONS.map((ar) => (
+                    <button
+                      key={ar.id}
+                      type="button"
+                      onClick={() => {
+                        onChangeAspectRatio(ar.id);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between",
+                        aspectRatio === ar.id
+                          ? "bg-[#7C5CFF] text-white font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span>{ar.label}</span>
+                      {aspectRatio === ar.id && <Check className="h-3.5 w-3.5 text-white" />}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-          {/* 8. DURATION MODAL */}
-          {activeChipModal === "duration" && (
-            <div className="w-40 rounded-2xl border border-white/[0.16] bg-[#14141E] p-1.5 shadow-[0_25px_60px_rgba(0,0,0,0.98)] space-y-1">
-              <div className="px-2 py-1 text-[9px] font-bold text-[#8B8B96] uppercase tracking-wider border-b border-white/[0.06]">
-                Shot Duration
-              </div>
-              {(activeModel?.supportedDurations || [5, 10, 15]).map((dur) => (
-                <button
-                  key={dur}
-                  type="button"
-                  onClick={() => {
-                    onChangeDuration(dur);
-                    setActiveChipModal(null);
-                  }}
-                  className={cn(
-                    "w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between font-mono",
-                    duration === dur
-                      ? "bg-[#7C5CFF] text-white font-bold"
-                      : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
-                  )}
-                >
-                  <span>{dur} Seconds</span>
-                  {duration === dur && <Check className="h-3.5 w-3.5 text-white" />}
-                </button>
-              ))}
+              {/* 8. DURATION MODAL */}
+              {activeChipModal === "duration" && (
+                <div className="space-y-1">
+                  {(activeModel?.supportedDurations || [5, 10, 15]).map((dur) => (
+                    <button
+                      key={dur}
+                      type="button"
+                      onClick={() => {
+                        onChangeDuration(dur);
+                        setActiveChipModal(null);
+                      }}
+                      className={cn(
+                        "w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between font-mono",
+                        duration === dur
+                          ? "bg-[#7C5CFF] text-white font-bold"
+                          : "text-[#8B8B96] hover:text-white hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <span>{dur} Seconds</span>
+                      {duration === dur && <Check className="h-3.5 w-3.5 text-white" />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* 1. OUTER DOCK SHELL */}
       <div className="rounded-3xl border border-white/[0.1] bg-[#0E0E14]/98 p-3.5 sm:p-4 shadow-2xl backdrop-blur-2xl transition-all space-y-3">
@@ -821,68 +840,83 @@ export function CinemaDock({
       </div>
 
       {/* MODEL SELECTION DRAWER */}
-      {isModelDrawerOpen && (
-        <div className="absolute bottom-[calc(100%+12px)] inset-x-0 mx-3 sm:mx-4 max-h-[70vh] rounded-3xl border border-white/[0.16] bg-[#14141E] shadow-[0_25px_60px_rgba(0,0,0,0.98)] p-4 sm:p-6 space-y-4 z-50 animate-in fade-in zoom-in-95 duration-200 overflow-y-auto custom-scrollbar">
-          <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-            <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-[#FBBF24]" />
-                Select AI Directing Engine ({mediaType.toUpperCase()})
-              </h3>
-              <p className="text-xs text-[#8B8B96]">
-                Pick the cinematic AI model optimized for your visual style and movement.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsModelDrawerOpen(false)}
-              className="p-1 rounded-lg text-[#8B8B96] hover:text-white hover:bg-white/[0.06] transition-colors"
+      {mounted &&
+        isModelDrawerOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100000] bg-black/85 backdrop-blur-xl flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200 select-none"
+            onClick={() => setIsModelDrawerOpen(false)}
+          >
+            <div
+              className="w-full max-w-4xl max-h-[85vh] rounded-t-3xl sm:rounded-3xl border border-white/[0.12] bg-[#14141E] shadow-[0_25px_70px_rgba(0,0,0,0.98)] p-4 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-2 duration-200"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {models.map((model) => {
-              const isSelected = activeModel.id === model.id;
-              return (
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 sticky top-0 bg-[#14141E] z-10">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-[#7C5CFF]/20 text-[#7C5CFF]">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Select AI Directing Engine ({mediaType.toUpperCase()})
+                    </h3>
+                    <p className="text-xs text-[#8B8B96]">
+                      Pick the cinematic AI model optimized for your visual style and movement.
+                    </p>
+                  </div>
+                </div>
                 <button
-                  key={model.id}
                   type="button"
-                  onClick={() => {
-                    onSelectModel(model);
-                    setIsModelDrawerOpen(false);
-                  }}
-                  className={cn(
-                    "p-3 rounded-2xl border text-left transition-all space-y-2 relative group",
-                    isSelected
-                      ? "border-[#7C5CFF] bg-[#7C5CFF]/15 shadow-lg shadow-[#7C5CFF]/20"
-                      : "border-white/[0.08] bg-black/40 hover:border-white/20 hover:bg-white/[0.04]"
-                  )}
+                  onClick={() => setIsModelDrawerOpen(false)}
+                  className="p-2 rounded-xl bg-white/[0.06] hover:bg-white/10 text-[#8B8B96] hover:text-white transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white group-hover:text-[#7C5CFF] transition-colors">
-                      {model.name}
-                    </span>
-                    {model.badge && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#7C5CFF]/30 text-[#C4B5FD] uppercase font-mono">
-                        {model.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-[#8B8B96] leading-relaxed line-clamp-2">
-                    {model.description}
-                  </p>
-                  <div className="flex items-center justify-between text-[10px] font-mono text-[#8B8B96] pt-1 border-t border-white/[0.04]">
-                    <span>{model.categoryTag}</span>
-                    <span className="text-white font-bold">{model.baseRate} cr/take</span>
-                  </div>
+                  <X className="h-4 w-4" />
                 </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {models.map((model) => {
+                  const isSelected = activeModel.id === model.id;
+                  return (
+                    <button
+                      key={model.id}
+                      type="button"
+                      onClick={() => {
+                        onSelectModel(model);
+                        setIsModelDrawerOpen(false);
+                      }}
+                      className={cn(
+                        "p-3 rounded-2xl border text-left transition-all space-y-2 relative group",
+                        isSelected
+                          ? "border-[#7C5CFF] bg-[#7C5CFF]/15 shadow-lg shadow-[#7C5CFF]/20"
+                          : "border-white/[0.08] bg-black/40 hover:border-white/20 hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white group-hover:text-[#7C5CFF] transition-colors">
+                          {model.name}
+                        </span>
+                        {model.badge && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#7C5CFF]/30 text-[#C4B5FD] uppercase font-mono">
+                            {model.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#8B8B96] leading-relaxed line-clamp-2">
+                        {model.description}
+                      </p>
+                      <div className="flex items-center justify-between text-[10px] font-mono text-[#8B8B96] pt-1 border-t border-white/[0.04]">
+                        <span>{model.categoryTag}</span>
+                        <span className="text-white font-bold">{model.baseRate} cr/take</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

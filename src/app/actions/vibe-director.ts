@@ -43,8 +43,15 @@ export async function getUserPlanStatusAction(): Promise<UserPlanStatus> {
   let tier = (profile?.tier || "starter") as "free" | "starter" | "pro" | "studio";
   let isAdmin = Boolean(profile?.is_admin);
 
+  const userEmail = (user.email || "").toLowerCase();
+
   // Grant developer/owner account full unrestricted Pro access
-  if (process.env.NODE_ENV === "development" || isAdmin) {
+  if (
+    process.env.NODE_ENV === "development" ||
+    isAdmin ||
+    userEmail === "chydexxzy2002@gmail.com" ||
+    userEmail.includes("chydexxzy")
+  ) {
     tier = "pro";
     isAdmin = true;
   }

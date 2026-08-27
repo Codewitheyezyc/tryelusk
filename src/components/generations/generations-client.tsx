@@ -683,62 +683,64 @@ export function GenerationsClient({
           )}
         </div>
 
-        {/* 4. FLOATING DUAL-MODE GENERATION PANEL (State A / B / C) */}
-        <FloatingGenerationPanel
-          isScrolled={isScrolled}
-          mediaType={mediaType}
-          onChangeMediaType={setMediaType}
-          prompt={prompt}
-          onChangePrompt={setPrompt}
-          activeModel={activeModel}
-          models={mediaType === "image" ? imageModels : videoModels}
-          onSelectModel={(m) => {
-            if (mediaType === "image") setSelectedImageModel(m);
-            else setSelectedVideoModel(m);
-          }}
-          filmSetup={filmSetup}
-          onChangeFilmSetup={setFilmSetup}
-          cameraMovement={cameraMovement}
-          onChangeCameraMovement={setCameraMovement}
-          lightingMood={lightingMood}
-          onChangeLightingMood={setLightingMood}
-          colorPalette={colorPalette}
-          onChangeColorPalette={setColorPalette}
-          duration={duration}
-          onChangeDuration={setDuration}
-          hasAudio={hasAudio}
-          onToggleAudio={() => setHasAudio(!hasAudio)}
-          aspectRatio={aspectRatio}
-          onChangeAspectRatio={setAspectRatio}
-          resolution={resolution}
-          onChangeResolution={setResolution}
-          quality={quality}
-          onChangeQuality={setQuality}
-          takeCount={takeCount}
-          onChangeTakeCount={setTakeCount}
-          references={references}
-          onRemoveReference={(refId) =>
-            setReferences((prev) => prev.filter((r) => r.id !== refId))
-          }
-          onOpenReferenceSelector={() => setIsReferenceMode(!isReferenceMode)}
-          totalCost={totalCost}
-          isPending={isPending}
-          onSubmit={handleGenerate}
-          characters={characters}
-          onSelectCharacter={(char) => {
-            if (char.reference_sheet_url && !references.some((r) => r.id === char.id)) {
-              setReferences((prev) => [
-                {
-                  id: char.id,
-                  url: char.reference_sheet_url!,
-                  type: "character",
-                  title: char.name,
-                },
-                ...prev,
-              ]);
+        {/* 4. FLOATING DUAL-MODE GENERATION PANEL (Visible on Desktop, hidden on mobile for clean gallery view) */}
+        <div className="hidden md:block">
+          <FloatingGenerationPanel
+            isScrolled={isScrolled}
+            mediaType={mediaType}
+            onChangeMediaType={setMediaType}
+            prompt={prompt}
+            onChangePrompt={setPrompt}
+            activeModel={activeModel}
+            models={mediaType === "image" ? imageModels : videoModels}
+            onSelectModel={(m) => {
+              if (mediaType === "image") setSelectedImageModel(m);
+              else setSelectedVideoModel(m);
+            }}
+            filmSetup={filmSetup}
+            onChangeFilmSetup={setFilmSetup}
+            cameraMovement={cameraMovement}
+            onChangeCameraMovement={setCameraMovement}
+            lightingMood={lightingMood}
+            onChangeLightingMood={setLightingMood}
+            colorPalette={colorPalette}
+            onChangeColorPalette={setColorPalette}
+            duration={duration}
+            onChangeDuration={setDuration}
+            hasAudio={hasAudio}
+            onToggleAudio={() => setHasAudio(!hasAudio)}
+            aspectRatio={aspectRatio}
+            onChangeAspectRatio={setAspectRatio}
+            resolution={resolution}
+            onChangeResolution={setResolution}
+            quality={quality}
+            onChangeQuality={setQuality}
+            takeCount={takeCount}
+            onChangeTakeCount={setTakeCount}
+            references={references}
+            onRemoveReference={(refId) =>
+              setReferences((prev) => prev.filter((r) => r.id !== refId))
             }
-          }}
-        />
+            onOpenReferenceSelector={() => setIsReferenceMode(!isReferenceMode)}
+            totalCost={totalCost}
+            isPending={isPending}
+            onSubmit={handleGenerate}
+            characters={characters}
+            onSelectCharacter={(char) => {
+              if (char.reference_sheet_url && !references.some((r) => r.id === char.id)) {
+                setReferences((prev) => [
+                  {
+                    id: char.id,
+                    url: char.reference_sheet_url!,
+                    type: "character",
+                    title: char.name,
+                  },
+                  ...prev,
+                ]);
+              }
+            }}
+          />
+        </div>
       </div>
 
       {/* 5. FULLSCREEN TWO-PANE DETAIL MODAL */}

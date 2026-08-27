@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Copy,
@@ -64,6 +65,7 @@ export function GenerationDetailModal({
   const [isCopied, setIsCopied] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Video playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -83,6 +85,10 @@ export function GenerationDetailModal({
   const [editResolution, setEditResolution] = useState("1080p");
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (generation) {
       const techParams = (generation.technical_params as Record<string, any>) || {};
       setIsFavorite(Boolean(techParams.is_favorite));
@@ -95,6 +101,17 @@ export function GenerationDetailModal({
       setIsPlaying(false);
     }
   }, [generation]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   if (!isOpen || !generation) return null;
 
@@ -187,46 +204,34 @@ export function GenerationDetailModal({
     document.body.removeChild(a);
   };
 
-  // Render prompt with highlighted @tags
-  const renderHighlightedPrompt = (text: string) => {
-    const parts = text.split(/(@[\w-]+)/g);
-    return parts.map((part, idx) => {
-      if (part.startsWith("@")) {
-        return (
-          <span
-            key={idx}
-            className="inline-flex items-center px-1.5 py-0.2 rounded bg-[#7C5CFF]/20 text-[#7C5CFF] font-semibold border border-[#7C5CFF]/30 mx-0.5"
-          >
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
-  };
-
   const formatSeconds = (sec: number) => {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-2 sm:p-6 overflow-hidden animate-in fade-in duration-200">
-      <div className="relative flex flex-col lg:flex-row w-full max-w-6xl h-full max-h-[92vh] rounded-3xl border border-white/[0.1] bg-[#0E0E14] shadow-2xl overflow-hidden">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-2 sm:p-4 md:p-6 overflow-hidden animate-in fade-in duration-200 select-none"
+      onClick={onClose}
+    >
+      <div
+        className="relative flex flex-col lg:flex-row w-full max-w-6xl h-full max-h-[94vh] rounded-3xl border border-white/[0.12] bg-[#0E0E14] shadow-[0_25px_70px_rgba(0,0,0,0.98)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* ================================================================= */}
-        {/* LEFT PANE (~65%): MEDIA VIEWER (Matching Screenshot 3 & 4) */}
+        {/* TOP / LEFT PANE: HIGH-IMPACT MEDIA VIEWER */}
         {/* ================================================================= */}
         <div
           ref={mediaContainerRef}
-          className="relative flex-1 lg:w-[65%] bg-[#060608] flex items-center justify-center overflow-hidden group select-none"
+          className="relative w-full h-[40vh] sm:h-[48vh] lg:h-full lg:w-[62%] bg-[#060608] flex items-center justify-center overflow-hidden group select-none shrink-0"
         >
           {isVideo ? (
             <div className="relative w-full h-full flex items-center justify-center">
               <video
                 ref={videoRef}
                 src={mediaUrl}
-                className="max-h-full max-w-full object-contain"
+                className="max-h-full max-w-full object-contain cursor-pointer"
                 loop
                 playsInline
                 onTimeUpdate={handleTimeUpdate}
@@ -239,15 +244,14 @@ export function GenerationDetailModal({
                 <button
                   type="button"
                   onClick={togglePlay}
-                  className="absolute h-16 w-16 rounded-full bg-black/60 border border-white/20 text-white flex items-center justify-center shadow-2xl backdrop-blur-md hover:scale-110 transition-transform"
+                  className="absolute h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-black/70 border border-white/20 text-white flex items-center justify-center shadow-2xl backdrop-blur-md hover:scale-110 transition-transform z-20"
                 >
-                  <Play className="h-7 w-7 fill-white translate-x-0.5" />
+                  <Play className="h-6 w-6 sm:h-7 sm:w-7 fill-white translate-x-0.5" />
                 </button>
               )}
 
-              {/* Bottom Video Controls Scrubber Bar */}
-              <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/95 via-black/60 to-transparent flex flex-col gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                {/* Yellow/Violet Scrubber Slider */}
+              {/* Video Controls Bar */}
+              <div className="absolute bottom-0 inset-x-0 p-3 sm:p-4 bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col gap-2 z-20">
                 <input
                   type="range"
                   min={0}
@@ -273,7 +277,7 @@ export function GenerationDetailModal({
                     >
                       {playbackSpeed}x
                     </button>
-                    <span className="font-mono text-[11px] text-[#8B8B96]">
+                    <span className="font-mono text-[10px] sm:text-[11px] text-[#8B8B96]">
                       {formatSeconds(currentTime)} / {formatSeconds(duration || 5)}
                     </span>
                   </div>
@@ -285,7 +289,7 @@ export function GenerationDetailModal({
               </div>
             </div>
           ) : mediaUrl ? (
-            <div className="relative w-full h-full flex items-center justify-center p-4">
+            <div className="relative w-full h-full flex items-center justify-center p-3 sm:p-4">
               <img
                 src={mediaUrl}
                 alt={generation.prompt || "Generated Take"}
@@ -299,8 +303,8 @@ export function GenerationDetailModal({
             </div>
           )}
 
-          {/* Quick Overlay Action Badges on Top/Bottom of Media */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2">
+          {/* Quick Action Badges on Media */}
+          <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
             <button
               type="button"
               onClick={() => setActiveTab("edit")}
@@ -333,21 +337,21 @@ export function GenerationDetailModal({
         </div>
 
         {/* ================================================================= */}
-        {/* RIGHT PANE (~35%): INFO & EDIT PANEL (Matching Screenshot 3 & 4) */}
+        {/* BOTTOM / RIGHT PANE: METADATA, PROMPT & DETAILS */}
         {/* ================================================================= */}
-        <div className="lg:w-[35%] flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-[#0E0E14] p-5 sm:p-6 overflow-y-auto custom-scrollbar space-y-6">
-          {/* Header with Author & Close Button */}
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+        <div className="flex-1 lg:w-[38%] flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-[#0E0E14] overflow-y-auto custom-scrollbar">
+          {/* Top User Info & Close Bar */}
+          <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center justify-between shrink-0 bg-[#0E0E14]">
             <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-[#7C5CFF] to-[#EC4899] flex items-center justify-center text-white text-xs font-bold shadow">
-                {userEmail.slice(0, 1).toUpperCase()}
+              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#7C5CFF] to-[#EC4899] flex items-center justify-center text-xs font-bold text-white uppercase shadow-md shadow-[#7C5CFF]/30">
+                {userEmail.charAt(0)}
               </div>
               <div>
-                <span className="text-xs font-bold text-white block truncate max-w-[140px]">
+                <span className="text-xs font-bold text-white block truncate max-w-[180px]">
                   {userEmail.split("@")[0]}
                 </span>
-                <span className="text-[9px] font-mono uppercase text-[#8B8B96]">
-                  Creator
+                <span className="text-[9px] font-mono text-[#8B8B96] uppercase">
+                  Filmmaker
                 </span>
               </div>
             </div>
@@ -355,300 +359,249 @@ export function GenerationDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-full bg-white/[0.05] hover:bg-white/10 text-[#8B8B96] hover:text-white transition-colors"
+              className="p-1.5 rounded-xl bg-white/[0.06] hover:bg-white/10 text-[#8B8B96] hover:text-white transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Info vs Edit Mode Tabs */}
-          <div className="flex items-center gap-2 p-1 rounded-2xl border border-white/[0.08] bg-black/60">
-            <button
-              type="button"
-              onClick={() => setActiveTab("info")}
-              className={cn(
-                "flex-1 py-1.5 rounded-xl text-xs font-bold transition-all",
-                activeTab === "info"
-                  ? "bg-white/[0.1] text-white shadow-sm"
-                  : "text-[#8B8B96] hover:text-white"
-              )}
-            >
-              Info
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("edit")}
-              className={cn(
-                "flex-1 py-1.5 rounded-xl text-xs font-bold transition-all",
-                activeTab === "edit"
-                  ? "bg-white/[0.1] text-white shadow-sm"
-                  : "text-[#8B8B96] hover:text-white"
-              )}
-            >
-              Edit
-            </button>
-          </div>
-
-          {/* TAB 1: INFO MODE */}
-          {activeTab === "info" ? (
-            <div className="space-y-5">
-              {/* Prompt Block */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-mono text-[#8B8B96]">
-                  <span className="uppercase font-bold tracking-wider">Prompt</span>
-                  <button
-                    type="button"
-                    onClick={handleCopyPrompt}
-                    className="flex items-center gap-1 text-[#7C5CFF] hover:underline"
-                  >
-                    {isCopied ? (
-                      <>
-                        <Check className="h-3 w-3" />
-                        <span>Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3 w-3" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div className="p-3.5 rounded-2xl border border-white/[0.08] bg-[#060608] text-xs text-[#F2F2F5] leading-relaxed">
-                  <p className={cn(!isPromptExpanded && "line-clamp-4")}>
-                    {renderHighlightedPrompt(generation.prompt)}
-                  </p>
-                  {generation.prompt.length > 140 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsPromptExpanded(!isPromptExpanded)}
-                      className="mt-2 text-[11px] font-semibold text-[#7C5CFF] hover:underline block"
-                    >
-                      {isPromptExpanded ? "See less" : "See all"}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Generation Details Section */}
-              <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#8B8B96] font-mono block">
-                  Details
-                </span>
-
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#8B8B96]">Model Engine</span>
-                    <span className="font-semibold text-white font-mono">
-                      {generation.model_used}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#8B8B96]">Resolution &amp; Framing</span>
-                    <span className="font-semibold text-white font-mono">
-                      {generation.aspect_ratio || "16:9"} • {generation.resolution || "1080p"}
-                    </span>
-                  </div>
-
-                  {isVideo && generation.duration_seconds && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[#8B8B96]">Duration</span>
-                      <span className="font-semibold text-white font-mono">
-                        {generation.duration_seconds}s
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#8B8B96]">Created</span>
-                    <span className="font-mono text-[#8B8B96] text-[11px]">
-                      {new Date(generation.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Big Primary Action Button */}
-              {!isVideo && onTurnToVideo && (
-                <button
-                  type="button"
-                  onClick={() => onTurnToVideo(generation)}
-                  className="w-full h-11 rounded-2xl bg-gradient-to-r from-[#7C5CFF] to-[#6D3EFF] hover:from-[#6D3EFF] hover:to-[#5B2DEE] text-white font-bold text-xs shadow-lg shadow-[#7C5CFF]/30 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
-                >
-                  <Video className="h-4 w-4" />
-                  <span>Turn to video</span>
-                </button>
-              )}
-            </div>
-          ) : (
-            /* TAB 2: EDIT MODE */
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#8B8B96] font-mono">
-                  Prompt Text
-                </label>
-                <textarea
-                  value={editPrompt}
-                  onChange={(e) => setEditPrompt(e.target.value)}
-                  rows={4}
-                  className="w-full rounded-2xl border border-white/[0.08] bg-[#060608] p-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#7C5CFF] leading-relaxed resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <label className="text-[10px] font-mono text-[#8B8B96] block mb-1">
-                    Aspect Ratio
-                  </label>
-                  <select
-                    value={editAspectRatio}
-                    onChange={(e) => setEditAspectRatio(e.target.value)}
-                    className="w-full h-8 px-2 rounded-xl border border-white/[0.08] bg-[#060608] text-xs text-white"
-                  >
-                    <option value="16:9">16:9 Cinema</option>
-                    <option value="9:16">9:16 Vertical</option>
-                    <option value="1:1">1:1 Square</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-mono text-[#8B8B96] block mb-1">
-                    Resolution
-                  </label>
-                  <select
-                    value={editResolution}
-                    onChange={(e) => setEditResolution(e.target.value)}
-                    className="w-full h-8 px-2 rounded-xl border border-white/[0.08] bg-[#060608] text-xs text-white"
-                  >
-                    <option value="720p">720p HD</option>
-                    <option value="1080p">1080p Full HD</option>
-                  </select>
-                </div>
-              </div>
-
+          {/* Tab Switcher: Info vs Edit */}
+          <div className="p-4 pb-0">
+            <div className="grid grid-cols-2 p-1 rounded-2xl border border-white/[0.08] bg-black/40">
               <button
                 type="button"
-                onClick={() => {
-                  onRecreate({
-                    ...generation,
-                    prompt: editPrompt,
-                    aspect_ratio: editAspectRatio,
-                    resolution: editResolution,
-                  });
-                  onClose();
-                }}
-                className="w-full h-11 rounded-2xl bg-gradient-to-r from-[#7C5CFF] to-[#6D3EFF] text-white font-bold text-xs shadow-lg shadow-[#7C5CFF]/30 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+                onClick={() => setActiveTab("info")}
+                className={cn(
+                  "py-1.5 rounded-xl text-xs font-bold transition-all",
+                  activeTab === "info"
+                    ? "bg-[#7C5CFF] text-white shadow-md shadow-[#7C5CFF]/30"
+                    : "text-[#8B8B96] hover:text-white"
+                )}
               >
-                <Sparkles className="h-4 w-4 text-[#FBBF24]" />
-                <span>Render New Take</span>
+                Info
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("edit")}
+                className={cn(
+                  "py-1.5 rounded-xl text-xs font-bold transition-all",
+                  activeTab === "edit"
+                    ? "bg-[#7C5CFF] text-white shadow-md shadow-[#7C5CFF]/30"
+                    : "text-[#8B8B96] hover:text-white"
+                )}
+              >
+                Edit Parameters
               </button>
             </div>
-          )}
+          </div>
 
-          {/* Action Row at Bottom */}
-          <div className="pt-3 border-t border-white/[0.06] space-y-3">
+          {/* Content Area */}
+          <div className="p-4 sm:p-5 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+            {activeTab === "info" ? (
+              <>
+                {/* Prompt Card */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#8B8B96] font-mono uppercase">
+                    <span>Prompt</span>
+                    <button
+                      type="button"
+                      onClick={handleCopyPrompt}
+                      className="hover:text-white flex items-center gap-1 normal-case font-sans"
+                    >
+                      {isCopied ? <Check className="h-3 w-3 text-[#4ADE80]" /> : <Copy className="h-3 w-3" />}
+                      <span>{isCopied ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                  <div className="p-3 rounded-2xl border border-white/[0.08] bg-black/40 text-xs text-[#F2F2F5] leading-relaxed">
+                    <p className={cn(!isPromptExpanded && "line-clamp-4")}>
+                      {generation.prompt}
+                    </p>
+                    {generation.prompt && generation.prompt.length > 180 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+                        className="text-[11px] text-[#7C5CFF] font-bold hover:underline mt-1 block"
+                      >
+                        {isPromptExpanded ? "Show less" : "See all"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Details Breakdown */}
+                <div className="space-y-2 pt-2 border-t border-white/[0.06]">
+                  <span className="text-[10px] font-mono uppercase text-[#8B8B96] font-bold block">
+                    Technical Specifications
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[10px] text-[#8B8B96] block">Model Engine</span>
+                      <span className="font-bold text-white truncate block">
+                        {generation.model_used}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[10px] text-[#8B8B96] block">Framing &amp; Ratio</span>
+                      <span className="font-bold text-white font-mono">
+                        {generation.aspect_ratio || "16:9"} • {generation.resolution || "1080p"}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[10px] text-[#8B8B96] block">Duration</span>
+                      <span className="font-bold text-white font-mono">
+                        {generation.duration_seconds || 5}s
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[10px] text-[#8B8B96] block">Created Date</span>
+                      <span className="font-bold text-white text-[11px]">
+                        {new Date(generation.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* Edit Parameters Form */
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-[#8B8B96] uppercase font-mono">
+                    Refine Prompt
+                  </label>
+                  <textarea
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                    rows={3}
+                    className="w-full p-2.5 rounded-xl border border-white/[0.08] bg-black/40 text-xs text-white placeholder:text-[#8B8B96]/50 focus:border-[#7C5CFF] focus:outline-none resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-[#8B8B96] uppercase">Ratio</label>
+                    <select
+                      value={editAspectRatio}
+                      onChange={(e) => setEditAspectRatio(e.target.value)}
+                      className="w-full h-8 px-2 rounded-xl border border-white/[0.08] bg-black text-xs text-white focus:outline-none"
+                    >
+                      <option value="16:9">16:9 Landscape</option>
+                      <option value="9:16">9:16 Vertical</option>
+                      <option value="21:9">21:9 Cinema</option>
+                      <option value="1:1">1:1 Square</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono text-[#8B8B96] uppercase">Resolution</label>
+                    <select
+                      value={editResolution}
+                      onChange={(e) => setEditResolution(e.target.value)}
+                      className="w-full h-8 px-2 rounded-xl border border-white/[0.08] bg-black text-xs text-white focus:outline-none"
+                    >
+                      <option value="1080p">1080p FHD</option>
+                      <option value="4k">4K UHD</option>
+                      <option value="720p">720p Draft</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onRecreate({
+                      ...generation,
+                      prompt: editPrompt,
+                      aspect_ratio: editAspectRatio,
+                      resolution: editResolution,
+                    });
+                    onClose();
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-[#7C5CFF] hover:bg-[#6D3EFF] text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Send to Studio Canvas</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Action Footer */}
+          <div className="p-4 border-t border-white/[0.08] bg-[#0E0E14] flex flex-col gap-2 shrink-0">
             <div className="grid grid-cols-2 gap-2">
-              {/* Recreate Button */}
               <button
                 type="button"
                 onClick={() => {
                   onRecreate(generation);
                   onClose();
                 }}
-                className="h-9 px-3 rounded-xl border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-white transition-colors flex items-center justify-center gap-1.5"
+                className="py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-all"
               >
                 <RotateCcw className="h-3.5 w-3.5 text-[#7C5CFF]" />
                 <span>Recreate</span>
               </button>
 
-              {/* Reference Button */}
               <button
                 type="button"
                 onClick={() => {
                   onReference(generation);
                   onClose();
                 }}
-                className="h-9 px-3 rounded-xl border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold text-white transition-colors flex items-center justify-center gap-1.5"
+                className="py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-all"
               >
                 <Layers className="h-3.5 w-3.5 text-[#FBBF24]" />
                 <span>Reference</span>
               </button>
             </div>
 
-            {/* Micro Action Icons */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex-1">
-                <MediaDownloadButton
-                  mediaUrl={mediaUrl}
-                  mediaType={generation.type}
-                  title={generation.prompt}
-                  currentResolution={generation.resolution || "1080p"}
-                  className="w-full"
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              {mediaUrl && (
+                <div className="flex-1">
+                  <MediaDownloadButton
+                    mediaUrl={mediaUrl}
+                    mediaType={generation.type}
+                    title={generation.prompt}
+                    currentResolution={generation.resolution || "1080p"}
+                  />
+                </div>
+              )}
 
               <button
                 type="button"
                 onClick={handleToggleFav}
                 className={cn(
-                  "h-9 w-9 rounded-xl border flex items-center justify-center transition-colors",
+                  "p-2.5 rounded-xl border transition-colors flex items-center justify-center shrink-0",
                   isFavorite
-                    ? "border-[#EC4899]/50 bg-[#EC4899]/15 text-[#EC4899]"
-                    : "border-white/[0.08] bg-black/60 text-[#8B8B96] hover:text-white"
+                    ? "border-[#EC4899]/40 bg-[#EC4899]/20 text-[#EC4899]"
+                    : "border-white/[0.08] bg-white/[0.03] text-[#8B8B96] hover:text-white"
                 )}
-                title="Favorite"
+                title={isFavorite ? "Remove from Starred" : "Star Take"}
               >
                 <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ url: mediaUrl, title: generation.prompt }).catch(() => {});
-                  } else {
-                    navigator.clipboard.writeText(mediaUrl);
-                    alert("Media link copied to clipboard!");
-                  }
-                }}
-                className="h-9 w-9 rounded-xl border border-white/[0.08] bg-black/60 hover:bg-white/[0.06] text-[#8B8B96] hover:text-white flex items-center justify-center transition-colors"
-                title="Share"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-
-              {/* Overflow Menu */}
-              <div className="relative">
+              {onDelete && (
                 <button
                   type="button"
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="h-9 w-9 rounded-xl border border-white/[0.08] bg-black/60 hover:bg-white/[0.06] text-[#8B8B96] hover:text-white flex items-center justify-center transition-colors"
+                  onClick={() => {
+                    onDelete(generation.id);
+                    onClose();
+                  }}
+                  className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-[#8B8B96] hover:text-red-400 hover:border-red-500/30 transition-colors flex items-center justify-center shrink-0"
+                  title="Delete Take"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
-
-                {isMenuOpen && (
-                  <div className="absolute bottom-full right-0 mb-2 w-40 rounded-2xl border border-white/[0.1] bg-[#0E0E14] p-1.5 shadow-2xl z-50">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onDelete && onDelete(generation.id);
-                        onClose();
-                      }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-400 hover:bg-red-500/10 transition-colors text-left"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                      <span>Move to Trash</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
     </div>
   );
+
+  return mounted ? createPortal(modalContent, document.body) : null;
 }
